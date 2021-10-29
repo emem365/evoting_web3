@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.aasha">
    <application
-        android:label="aasha"
+        android:label="Aasha"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
