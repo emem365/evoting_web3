@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:aasha/cast_vote.dart';
-import 'package:aasha/election.dart';
+import 'package:aasha/create_election.dart';
 import 'package:aasha/otp_screen.dart';
 import 'package:aasha/elections.dart';
 import 'package:checkdigit/checkdigit.dart';
