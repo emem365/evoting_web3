@@ -1,4 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:aasha/secrets.dart';
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:web3dart/web3dart.dart';
@@ -75,20 +80,22 @@ class BlockchainService {
     final results =
         await queryRegisterContract('registeredUser', [_myPublicAddress]);
 
-    return results[0] == 'true';
+    debugPrint(results.toString());
+    return results[0];
   }
 
   Future<void> registerUser(String ipfsHash, String adhaar) async {
     assert(registerContract != null);
     assert(_client != null);
     final ethFunction = registerContract!.function('registerUser');
-    await _client!.sendTransaction(
+    final response = await _client!.sendTransaction(
         _myPrivateKey,
         Transaction.callContract(
           contract: registerContract!,
           function: ethFunction,
-          parameters: [ipfsHash, _myPrivateKey.publicKey, adhaar],
-        ));
+          parameters: [convertHashToBytes(ipfsHash, _myPublicAddress), _myPublicAddress, adhaar],
+        ), chainId: null, fetchChainIdFromNetworkId: true);
+    debugPrint(response);
   }
 
   Future<List<DeployedContract>> getElectionsInProgress() async {
@@ -121,5 +128,14 @@ class BlockchainService {
 
 
   DateTime dateTimeFromUnixTimestamp(BigInt b) => DateTime.fromMillisecondsSinceEpoch(b.toInt()*1000);
+
+  Uint8List convertHashToBytes(String hash, EthereumAddress publicKey){
+    var key = utf8.encode(publicKey.hex);
+    var hashBytes = utf8.encode(hash);
+
+    final hmacSha256 = Hmac(sha256, key);
+    final digest = hmacSha256.convert(hashBytes);
+    return Uint8List.fromList(digest.bytes);
+  }
 
 }
