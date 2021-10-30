@@ -11,8 +11,10 @@ contract Voting{
     mapping (address => bool) public hasVoted;
     mapping (string => bool) public registeredAadhar;
     mapping (address => bool) public registeredUser;
-    
     mapping(bytes32 => uint) public count;
+    
+    //Elections
+    mapping (bytes32 => bool) public elections;
     
     function registerParty(bytes32 name) public{
         require(!registeredHash[name]);
