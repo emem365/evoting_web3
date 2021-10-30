@@ -5,11 +5,11 @@ import "./register.sol";
 contract createElection {
     
     address[] public deployedContracts;
-    address manager = 0x0C3d04c2b490e3Cb883022e359A893621d150994;
-    uint dUsers;
-    uint dRegisters;
+    address manager = 0x5449E38e424342A2D5c7042942E0F334eeB110C4;
+    uint public dUsers;
+    uint public dRegisters;
     address newelection;
-    mapping(address => string) electionName;
+    mapping(address => string) public electionName;
     function newElection(uint numberOfDaysForRegisters,uint numberOfDaysForUsers, string memory name) public {
         require(msg.sender == manager);
         dUsers = block.timestamp + (numberOfDaysForUsers * 1 days);
@@ -35,7 +35,7 @@ contract Voting{
     mapping (bytes32 => bool) public registeredHash;
     
     mapping (address => bool) public hasVoted;
-    
+    mapping(bytes32 => string) public partyName;
     mapping(bytes32 => uint) public count;
     
     constructor(uint d, uint f) public{
@@ -44,7 +44,7 @@ contract Voting{
         global = Register(0x754112A0c1D537698ABEcF568E39d7775E754E7D);
     }
     
-    function registerParty(bytes32 name) public{
+    function registerParty(string memory p, bytes32 name) public{
         require(!registeredHash[name]);
         require(!registeredParty[msg.sender]);
         require(block.timestamp < deadlineforRegisters);
@@ -52,7 +52,7 @@ contract Voting{
         registeredParty[msg.sender] = true;
         registeredHash[name] = true;
         count[name] = 0;
-        
+        partyName[name] = p;
         party.push(name);
     }
     
@@ -68,5 +68,5 @@ contract Voting{
     function displayParty() public view returns(bytes32[] memory){
         return party;
     }
-       
+    
 }
