@@ -1,13 +1,21 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:aasha/blockchain_service.dart';
+import 'package:aasha/register.dart';
 import 'package:flutter/material.dart';
 
 class OtpPage extends StatefulWidget {
-  const OtpPage({Key? key}) : super(key: key);
+  final UserModel model;
+  const OtpPage({Key? key, required this.model}) : super(key: key);
 
   @override
   _OtpPageState createState() => _OtpPageState();
 }
 
 class _OtpPageState extends State<OtpPage> {
+  bool loading = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,8 +38,7 @@ class _OtpPageState extends State<OtpPage> {
                       child: GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: const Icon(
-                          Icons.arrow_back,
-                          size: 32,
+                          Icons.arrow_back_ios,
                           color: Colors.white70,
                         ),
                       ),
@@ -45,22 +52,16 @@ class _OtpPageState extends State<OtpPage> {
                           .textTheme
                           .headline5
                           ?.copyWith(color: Colors.white70),
-                      //  TextStyle(
-                      //   color: Colors.white70,
-                      //   fontSize: 22,
-                      //   fontWeight: FontWeight.bold,
-                      // ),
                     ),
                     const SizedBox(
                       height: 10,
                     ),
-                    const Text(
+                    Text(
                       "Please enter the OTP sent to registered mobile number",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white70,
-                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .subtitle2
+                          ?.copyWith(color: Colors.white70),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(
@@ -89,7 +90,25 @@ class _OtpPageState extends State<OtpPage> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () async {
+                                setState(() {
+                                  loading = true;
+                                });
+                                //TODO: Get IPFS HASH
+                                try {
+                                  await BlockchainService.instance.registerUser(
+                                      "QmXwF1otuvKu5LtumFhHGrPkJUDvbV3x82JFCahkHF9sCT", widget.model.adhaar);
+                                      debugPrint('PROCESSED');
+                                } catch (e) {
+                                  setState(() {
+                                    loading = true;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Unable to process request: ${e.toString()}')));
+                                }
+                              },
                               style: ButtonStyle(
                                 foregroundColor:
                                     MaterialStateProperty.all<Color>(
@@ -107,7 +126,7 @@ class _OtpPageState extends State<OtpPage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(14.0),
                                 child: Text(
-                                  'Verify',
+                                  'Verify and register',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.white.withOpacity(0.8),
@@ -120,15 +139,13 @@ class _OtpPageState extends State<OtpPage> {
                       ),
                     ),
                     const SizedBox(
-                      height: 18,
+                      height: 22,
                     ),
-                    const Text(
+                    Text(
                       "Didn't you receive any code?",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white70,
-                      ),
+                      style: Theme.of(context).textTheme.subtitle2?.copyWith(
+                            color: Colors.white70,
+                          ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(
@@ -136,13 +153,11 @@ class _OtpPageState extends State<OtpPage> {
                     ),
                     InkWell(
                       onTap: () {},
-                      child: const Text(
+                      child: Text(
                         "Resend New Code",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFB998FF),
-                        ),
+                        style: Theme.of(context).textTheme.subtitle2?.copyWith(
+                              color: const Color(0xFFB998FF),
+                            ),
                         textAlign: TextAlign.center,
                       ),
                     ),

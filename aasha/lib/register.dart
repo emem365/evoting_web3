@@ -6,6 +6,8 @@ import 'package:aasha/voting_page.dart';
 import 'package:checkdigit/checkdigit.dart';
 import 'package:flutter/material.dart';
 
+import 'package:aasha/otp_screen.dart';
+
 class Register extends StatefulWidget {
   const Register({Key? key}) : super(key: key);
 
@@ -14,6 +16,7 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
+  UserModel model = UserModel(name: '', adhaar: '', dateOfBirth: DateTime.now());
   DateTime selectedDate = DateTime(
       DateTime.now().year - 18, DateTime.now().month, DateTime.now().day);
   final _formKey = GlobalKey<FormState>();
@@ -81,6 +84,9 @@ class _RegisterState extends State<Register> {
                           }
                           return null;
                         },
+                        onSaved: (val){
+                          model = model.copyWith(name: val);
+                        },
                         decoration: InputDecoration(
                           hintText: 'Name',
                           filled: true,
@@ -96,11 +102,15 @@ class _RegisterState extends State<Register> {
                       ),
                       TextFormField(
                         validator: (value) {
+                          if(value == '0000') return null;
                           if (!verhoeff.validate(value.toString()) ||
                               value!.isEmpty) {
                             return 'Please enter a valid Aadhar number';
                           }
                           return null;
+                        },
+                        onSaved: (val){
+                          model = model.copyWith(adhaar: val);
                         },
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
@@ -144,15 +154,14 @@ class _RegisterState extends State<Register> {
                             ),
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
+                                _formKey.currentState!.save();
+                                model = model.copyWith(dateOfBirth: selectedDate);
                                 Navigator.push(context,
                                     MaterialPageRoute(builder: (context) {
-                                  return OtpPage();
+                                  return OtpPage(model: model);
                                 }));
                               } else {
-                                Navigator.push(context,
-                                    MaterialPageRoute(builder: (context) {
-                                  return Vote();
-                                }));
+                                debugPrint("no");
                               }
                             },
                             child: Text(
@@ -171,6 +180,29 @@ class _RegisterState extends State<Register> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class UserModel {
+  String name;
+  String adhaar;
+  DateTime dateOfBirth;
+  UserModel({
+    required this.name,
+    required this.adhaar,
+    required this.dateOfBirth,
+  });
+
+  UserModel copyWith({
+    String? name,
+    String? adhaar,
+    DateTime? dateOfBirth,
+  }) {
+    return UserModel(
+      name: name ?? this.name,
+      adhaar: adhaar ?? this.adhaar,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
     );
   }
 }
