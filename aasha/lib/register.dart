@@ -91,6 +91,7 @@ class _RegisterState extends State<Register> {
                       ),
                       TextFormField(
                         validator: (value) {
+                          if(value == '0000') return null;
                           if (!verhoeff.validate(value.toString()) ||
                               value!.isEmpty) {
                             return 'Please enter a valid Aadhar number';
