@@ -4,7 +4,7 @@ import ipfshttpclient
 
 #open the document
 def replace_file(name, dob, aadhar, pub_address):
-    doc=DocxTemplate(r'template.docx')
+    doc=DocxTemplate(r'Voteris.docx')
     context = {
             "Name": name,
             "DOB": dob,
