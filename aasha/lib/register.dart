@@ -1,5 +1,5 @@
 import 'dart:ui';
-
+import 'package:checkdigit/checkdigit.dart';
 import 'package:flutter/material.dart';
 
 class Register extends StatefulWidget {
@@ -11,6 +11,7 @@ class Register extends StatefulWidget {
 
 class _RegisterState extends State<Register> {
   DateTime selectedDate = DateTime.now();
+  final _formKey = GlobalKey<FormState>();
 
   _pickdate() async {
     DateTime? date = await showDatePicker(
@@ -30,106 +31,133 @@ class _RegisterState extends State<Register> {
     return Scaffold(
       body: Stack(
         children: [
-          Positioned( bottom: -150,  right: -150, child: Opacity(opacity: 0.5, child: Image.asset('assets/icon-fg.png'))),
+          Positioned(
+              bottom: -150,
+              right: -150,
+              child: Opacity(
+                  opacity: 0.5, child: Image.asset('assets/icon-fg.png'))),
           Positioned.fill(
             child: Padding(
               padding: const EdgeInsets.all(32.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 50.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Welcome",
-                          style: Theme.of(context)
-                              .textTheme
-                              .headline5
-                              ?.copyWith(color: const Color(0xFFB998FF)),
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 50.0, top: 150),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Welcome",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headline5
+                                  ?.copyWith(color: const Color(0xFFB998FF)),
+                            ),
+                            Text(
+                              "Sign-up to vote",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headline3
+                                  ?.copyWith(color: const Color(0xFFB998FF)),
+                            ),
+                          ],
                         ),
-                        Text(
-                          "Sign-up to vote",
-                          style: Theme.of(context)
-                              .textTheme
-                              .headline3
-                              ?.copyWith(color: const Color(0xFFB998FF)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  TextFormField(
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Name',
-                      filled: true,
-                      fillColor: Colors.black12,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
                       ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  TextFormField(
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Aadhar Number',
-                      filled: true,
-                      fillColor: Colors.black12,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Colors.black12,
-                    ),
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.event,
-                      ),
-                      title: Text(
-                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                      TextFormField(
                         style: const TextStyle(color: Colors.white),
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return 'Please enter your name';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Name',
+                          filled: true,
+                          fillColor: Colors.black12,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
                       ),
-                      onTap: _pickdate,
-                    ),
+                      const SizedBox(
+                        height: 15,
+                      ),
+                      TextFormField(
+                        validator: (value) {
+                          if (!verhoeff.validate(value.toString()) ||
+                              value!.isEmpty) {
+                            return 'Please enter a valid Aadhar number';
+                          }
+                          return null;
+                        },
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Aadhar Number',
+                          filled: true,
+                          fillColor: Colors.black12,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 15,
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.black12,
+                        ),
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.event,
+                          ),
+                          title: Text(
+                            '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          onTap: _pickdate,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 30.0),
+                        child: SizedBox(
+                          width: MediaQuery.of(context).size.width * 2.2 / 3,
+                          height: 48,
+                          child: ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all(
+                                  const Color(0xFFB998FF)),
+                            ),
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                print("yes");
+                              } else {
+                                print("no");
+                              }
+                            },
+                            child: Text(
+                              "Sign-up",
+                              style:
+                                  TextStyle(color: Colors.white.withOpacity(0.8)),
+                            ),
+                          ),
+                        ),
+                      )
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30.0),
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 2.2 / 3,
-                      height: 48,
-                      child: ElevatedButton(
-                        style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all(
-                              const Color(0xFFB998FF)),
-                        ),
-                        onPressed: () {},
-                        child: Text(
-                          "Sign-up",
-                          style:
-                              TextStyle(color: Colors.white.withOpacity(0.8)),
-                        ),
-                      ),
-                    ),
-                  )
-                ],
+                ),
               ),
             ),
           ),
-          
         ],
       ),
     );
