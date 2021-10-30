@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:aasha/otp_screen.dart';
 import 'package:checkdigit/checkdigit.dart';
 import 'package:flutter/material.dart';
 
@@ -10,15 +11,17 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
-  DateTime selectedDate = DateTime.now();
+  DateTime selectedDate = DateTime(
+      DateTime.now().year - 18, DateTime.now().month, DateTime.now().day);
   final _formKey = GlobalKey<FormState>();
 
   _pickdate() async {
     DateTime? date = await showDatePicker(
         context: context,
         initialDate: selectedDate,
-        firstDate: DateTime(2015),
-        lastDate: DateTime(2101));
+        firstDate: DateTime(1850),
+        lastDate: DateTime(DateTime.now().year - 18, DateTime.now().month,
+            DateTime.now().day));
     if (date != null && date != selectedDate) {
       setState(() {
         selectedDate = date;
@@ -45,7 +48,6 @@ class _RegisterState extends State<Register> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-
                       Padding(
                         padding: const EdgeInsets.only(bottom: 50.0, top: 150),
                         child: Column(
@@ -139,15 +141,18 @@ class _RegisterState extends State<Register> {
                             ),
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
-                                print("yes");
+                                Navigator.push(context,
+                                    MaterialPageRoute(builder: (context) {
+                                  return OtpPage();
+                                }));
                               } else {
                                 print("no");
                               }
                             },
                             child: Text(
                               "Sign-up",
-                              style:
-                                  TextStyle(color: Colors.white.withOpacity(0.8)),
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8)),
                             ),
                           ),
                         ),
