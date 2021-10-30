@@ -29,10 +29,8 @@ class BlockchainService {
       EthereumAddress.fromHex('0xc916249D121eE1e7630DAC2921c416F9Ca9F8768');
 
   // Remove these somehow
-  final EthPrivateKey _myPrivateKey = EthPrivateKey.fromHex(
-      PRIVATE_KEY);
-  final EthereumAddress _myPublicAddress =
-      EthereumAddress.fromHex(PUBLIC_KEY);
+  final EthPrivateKey _myPrivateKey = EthPrivateKey.fromHex(PRIVATE_KEY);
+  final EthereumAddress _myPublicAddress = EthereumAddress.fromHex(PUBLIC_KEY);
 
   Web3Client? _client;
   DeployedContract? createElectionContract;
@@ -93,8 +91,14 @@ class BlockchainService {
         Transaction.callContract(
           contract: registerContract!,
           function: ethFunction,
-          parameters: [convertHashToBytes(ipfsHash, _myPublicAddress), _myPublicAddress, adhaar],
-        ), chainId: null, fetchChainIdFromNetworkId: true);
+          parameters: [
+            convertHashToBytes(ipfsHash, _myPublicAddress),
+            _myPublicAddress,
+            adhaar
+          ],
+        ),
+        chainId: null,
+        fetchChainIdFromNetworkId: true);
     debugPrint(response);
   }
 
@@ -105,18 +109,17 @@ class BlockchainService {
         await rootBundle.loadString('assets/abis/votingsContractAbi.json');
     for (var election in elections) {
       final contract = DeployedContract(
-          ContractAbi.fromJson(votingContractAbi, 'Voting'),
-          election);
-      final response = await queryContract(contract, 'deadlineforUsers', []);
-      final deadline = dateTimeFromUnixTimestamp(response[0]);
-      if(deadline.isAfter(DateTime.now())){
+          ContractAbi.fromJson(votingContractAbi, 'Voting'), election);
+
+      final deadline = await getUserDeadlineForElection(contract);
+      if (deadline.isAfter(DateTime.now())) {
         contracts.add(contract);
       }
     }
     return contracts;
   }
 
-  Future<List<dynamic>> queryContract(DeployedContract contract, 
+  Future<List<dynamic>> queryContract(DeployedContract contract,
       String functionName, List<dynamic> args) async {
     assert(_client != null);
     final ethFunction = contract.function(functionName);
@@ -125,17 +128,23 @@ class BlockchainService {
     return result;
   }
 
+  DateTime dateTimeFromUnixTimestamp(BigInt b) =>
+      DateTime.fromMillisecondsSinceEpoch(b.toInt() * 1000);
 
-
-  DateTime dateTimeFromUnixTimestamp(BigInt b) => DateTime.fromMillisecondsSinceEpoch(b.toInt()*1000);
-
-  Uint8List convertHashToBytes(String hash, EthereumAddress publicKey){
+  Uint8List convertHashToBytes(String hash, EthereumAddress publicKey) {
     var key = utf8.encode(publicKey.hex);
     var hashBytes = utf8.encode(hash);
-
     final hmacSha256 = Hmac(sha256, key);
     final digest = hmacSha256.convert(hashBytes);
     return Uint8List.fromList(digest.bytes);
   }
 
+  Future<String> getElectionName(DeployedContract contract) {
+    return Future.value('Election');
+  }
+
+  Future<DateTime> getUserDeadlineForElection(DeployedContract contract) async {
+    final response = await queryContract(contract, 'deadlineforUsers', []);
+    return dateTimeFromUnixTimestamp(response[0]);
+  }
 }

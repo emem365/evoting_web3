@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:aasha/cast_vote.dart';
 import 'package:aasha/election.dart';
 import 'package:aasha/otp_screen.dart';
-import 'package:aasha/voting_page.dart';
+import 'package:aasha/elections.dart';
 import 'package:checkdigit/checkdigit.dart';
 import 'package:flutter/material.dart';
 

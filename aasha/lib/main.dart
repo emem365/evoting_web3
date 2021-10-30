@@ -1,5 +1,7 @@
 import 'package:aasha/blockchain_service.dart';
+import 'package:aasha/cast_vote.dart';
 import 'package:aasha/register.dart';
+import 'package:aasha/elections.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -27,8 +29,10 @@ class AppWidget extends StatelessWidget {
         builder: (context, snap) {
           if(snap.hasData){
             if(snap.data ?? false){
-              return Material(child: Center(child: Text('NextPage')),);
+              // return const VoteRegistered();
+              return const Elections();
             } else {
+              
               return const Register();
             }
           }
