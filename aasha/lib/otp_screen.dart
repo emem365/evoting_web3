@@ -37,10 +37,7 @@ class _OtpPageState extends State<OtpPage> {
                       ),
                     ),
                     const SizedBox(
-                      height: 18,
-                    ),
-                    const SizedBox(
-                      height: 24,
+                      height: 42,
                     ),
                     Text(
                       'Verification',

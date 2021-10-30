@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:aasha/election.dart';
 import 'package:aasha/otp_screen.dart';
 import 'package:checkdigit/checkdigit.dart';
 import 'package:flutter/material.dart';
@@ -146,7 +147,10 @@ class _RegisterState extends State<Register> {
                                   return OtpPage();
                                 }));
                               } else {
-                                print("no");
+                                Navigator.push(context,
+                                    MaterialPageRoute(builder: (context) {
+                                  return Election();
+                                }));
                               }
                             },
                             child: Text(
