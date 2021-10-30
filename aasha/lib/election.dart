@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class Election extends StatefulWidget {
-  const Election({Key? key}) : super(key: key);
+class CreateElection extends StatefulWidget {
+  const CreateElection({Key? key}) : super(key: key);
 
   @override
-  _ElectionState createState() => _ElectionState();
+  _CreateElectionState createState() => _CreateElectionState();
 }
 
-class _ElectionState extends State<Election> {
+class _CreateElectionState extends State<CreateElection> {
   bool _isNumeric(String? str) {
     if (str == null) {
       return false;
