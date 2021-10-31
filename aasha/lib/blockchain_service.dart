@@ -24,7 +24,7 @@ class BlockchainService {
       'wss://ropsten.infura.io/ws/v3/b8e3788847454d999851078493cd7800';
 
   final createElectionContractAddress =
-      EthereumAddress.fromHex('0x037d0F2FBd7d983e095F7Fe4fffA0C181Df3314C');
+      EthereumAddress.fromHex('0x690072BD0cC42baC936f342c34CCC3d9E17Ed423');
   final registerContractAddress =
       EthereumAddress.fromHex('0xc916249D121eE1e7630DAC2921c416F9Ca9F8768');
 
@@ -139,12 +139,67 @@ class BlockchainService {
     return Uint8List.fromList(digest.bytes);
   }
 
-  Future<String> getElectionName(DeployedContract contract) {
-    return Future.value('Election');
+  Uint8List convertToBytes(String inp) {
+    var bytes = utf8.encode(inp);
+    final digest = sha1.convert(bytes);
+    return Uint8List.fromList(digest.bytes);
+  }
+
+  Future<String> getElectionName(DeployedContract contract) async {
+    final response =
+        await queryCreateElectionContract('electionName', [contract.address]);
+    return response[0];
   }
 
   Future<DateTime> getUserDeadlineForElection(DeployedContract contract) async {
     final response = await queryContract(contract, 'deadlineforUsers', []);
     return dateTimeFromUnixTimestamp(response[0]);
+  }
+
+  Future<void> createElection(int numberOfDaysForRegisters,
+      int numberOfDaysForUsers, String name) async {
+    assert(createElectionContract != null);
+    assert(_client != null);
+    final ethFunction = createElectionContract!.function('newElection');
+    final response = await _client!.sendTransaction(
+        _myPrivateKey,
+        Transaction.callContract(
+          contract: createElectionContract!,
+          function: ethFunction,
+          parameters: [
+            BigInt.from(numberOfDaysForRegisters),
+            BigInt.from(numberOfDaysForUsers),
+            name
+          ],
+        ),
+        chainId: null,
+        fetchChainIdFromNetworkId: true);
+    debugPrint(response);
+  }
+
+  Future<void> createParty(DeployedContract contract, String name) async {
+    assert(_client != null);
+    final ethFunction = contract.function('registerParty');
+    final response = await _client!.sendTransaction(
+        _myPrivateKey,
+        Transaction.callContract(
+          contract: contract,
+          function: ethFunction,
+          parameters: [name, convertHashToBytes(name, _myPublicAddress)],
+        ),
+        chainId: null,
+        fetchChainIdFromNetworkId: true);
+    debugPrint(response);
+  }
+
+  Future<List<dynamic>> getParties(DeployedContract contract) async {
+    final response = await queryContract(contract, 'displayParty', []);
+    return response[0];   
+  }
+
+  Future<String> getPartyName(DeployedContract contract, Uint8List party) async {
+    final response = await queryContract(contract, 'partyName', [party]);
+    debugPrint(response.toString());
+    return response[0];
   }
 }

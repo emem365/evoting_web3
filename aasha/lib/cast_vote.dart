@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:aasha/blockchain_service.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,6 +21,34 @@ class Vote extends StatefulWidget {
 
 class _VoteState extends State<Vote> {
   int selected = -1;
+  bool loading = false;
+  List<dynamic> partiesHashes = [];
+  Map<dynamic, String> partyNames = {};
+
+  @override
+  void initState() {
+    loadParties();
+    super.initState();
+  }
+
+  void loadParties() async {
+    setState(() {
+      loading = true;
+    });
+    partiesHashes =
+        await BlockchainService.instance.getParties(widget.contract);
+    await Future.wait(partiesHashes.map((e) async {
+      if (partyNames.containsKey(e)) {
+        return;
+      }
+      partyNames[e] =
+          await BlockchainService.instance.getPartyName(widget.contract, e);
+    }));
+    setState(() {
+      loading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,43 +94,48 @@ class _VoteState extends State<Vote> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                  itemCount: 10,
-                  itemBuilder: (BuildContext context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            selected = index;
-                          });
-                        },
-                        child: Container(
-                          child: Center(
-                              child: Text(
-                            "PartyName",
-                            style: Theme.of(context)
-                                .textTheme
-                                .headline6
-                                ?.copyWith(color: Colors.white70),
-                          )),
-                          height: 75,
-                          decoration: BoxDecoration(
-                              color: selected == index
-                                  ? const Color(0xFFB998FF)
-                                  : Colors.black54,
-                              border: Border.all(
-                                color: selected == index
-                                    ? const Color(0xFFB998FF)
-                                    : const Color(0xFF7CFDF2),
-                              ),
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(20))),
-                        ),
-                      ),
-                    );
-                  }),
-            ),
+                child: loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : partiesHashes.isEmpty
+                        ? const Center(
+                            child: Text('No parties have registered yet'))
+                        : ListView.builder(
+                            itemCount: partiesHashes.length,
+                            itemBuilder: (BuildContext context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      selected = index;
+                                    });
+                                  },
+                                  child: Container(
+                                    child: Center(
+                                        child: Text(
+                                      partyNames[partiesHashes[index]]
+                                          .toString(),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headline6
+                                          ?.copyWith(color: Colors.white70),
+                                    )),
+                                    height: 75,
+                                    decoration: BoxDecoration(
+                                        color: selected == index
+                                            ? const Color(0xFFB998FF)
+                                            : Colors.black54,
+                                        border: Border.all(
+                                          color: selected == index
+                                              ? const Color(0xFFB998FF)
+                                              : const Color(0xFF7CFDF2),
+                                        ),
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.circular(20))),
+                                  ),
+                                ),
+                              );
+                            })),
             Padding(
               padding: const EdgeInsets.only(top: 32, bottom: 16),
               child: SizedBox(
@@ -109,6 +143,9 @@ class _VoteState extends State<Vote> {
                 width: MediaQuery.of(context).size.width / 2,
                 child: ElevatedButton(
                     onPressed: () async {
+                      if(selected == -1){
+                        return;
+                      }
                       Dialog confirmation = Dialog(
                         shape: RoundedRectangleBorder(
                             borderRadius:
@@ -119,11 +156,11 @@ class _VoteState extends State<Vote> {
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              const Padding(
-                                padding: EdgeInsets.all(15.0),
+                               Padding(
+                                padding: const EdgeInsets.all(15.0),
                                 child: Text(
-                                  'Are you sure you want to vote for this party?',
-                                  style: TextStyle(color: Colors.white70),
+                                  'Are you sure you want to vote for ${partyNames[partiesHashes[selected]]} party?',
+                                  style: const TextStyle(color: Colors.white70),
                                 ),
                               ),
                               Image.asset(
@@ -201,58 +238,63 @@ class VoteRegistered extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const BackButton(),),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: const BackButton(),
+        ),
         body: TopCenterConfetti(
-      child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'Congratulations!',
-                  style: Theme.of(context).textTheme.headline4?.copyWith(
-                      color: const Color(0xFFB998FF),
-                      fontWeight: FontWeight.bold),
-                ),
-                Image.asset('assets/fist-bump.png'),
-                Text(
-                  'You\'ve successfully cast your vote!',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headline6
-                      ?.copyWith(color: Colors.white70),
-                ),
-                const SizedBox(
-                  height: 8,
-                ),
-                const Text(
-                  'This transaction ID is proof of your vote:',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                Row(
+          child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Center(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    Text(
+                      'Congratulations!',
+                      style: Theme.of(context).textTheme.headline4?.copyWith(
+                          color: const Color(0xFFB998FF),
+                          fontWeight: FontWeight.bold),
+                    ),
+                    Image.asset('assets/fist-bump.png'),
+                    Text(
+                      'You\'ve successfully cast your vote!',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline6
+                          ?.copyWith(color: Colors.white70),
+                    ),
+                    const SizedBox(
+                      height: 8,
+                    ),
                     const Text(
-                      'Txn id: 0xahhfk7dsfnmdf892nfd0fdm',
+                      'This transaction ID is proof of your vote:',
                       style: TextStyle(color: Colors.white70),
                     ),
-                    IconButton(
-                        onPressed: () {
-                          Clipboard.setData(
-                                  const ClipboardData(text: 'Some Text'))
-                              .then((value) => ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
-                                      content: Text('Copied to clipboard'))));
-                        },
-                        icon: const Icon(Icons.copy))
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Txn id: 0xahhfk7dsfnmdf892nfd0fdm',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        IconButton(
+                            onPressed: () {
+                              Clipboard.setData(
+                                      const ClipboardData(text: 'Some Text'))
+                                  .then((value) => ScaffoldMessenger.of(context)
+                                      .showSnackBar(const SnackBar(
+                                          content:
+                                              Text('Copied to clipboard'))));
+                            },
+                            icon: const Icon(Icons.copy))
+                      ],
+                    )
                   ],
-                )
-              ],
-            ),
-          )),
-    ));
+                ),
+              )),
+        ));
   }
 }
 

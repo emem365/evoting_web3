@@ -1,25 +1,141 @@
 import 'package:aasha/blockchain_service.dart';
+import 'package:aasha/cast_vote.dart';
+import 'package:aasha/elections.dart';
 import 'package:flutter/material.dart';
+import 'package:web3dart/web3dart.dart';
 
-class CreateElection extends StatefulWidget {
-  const CreateElection({Key? key}) : super(key: key);
-
-  @override
-  _CreateElectionState createState() => _CreateElectionState();
-}
-
-class _CreateElectionState extends State<CreateElection> {
-  String name = '';
-  int numberOfDaysForUsers = 0;
-  int numberOfDaysForRegisters = 0;
-  bool loading = false;
-  bool _isNumeric(String? str) {
-    if (str == null) {
-      return false;
-    }
-    return double.tryParse(str) != null;
+class AddElectionParty extends StatelessWidget {
+  const AddElectionParty({Key? key}) : super(key: key);
+  Future<ElectionInfo> getElectionInfo(DeployedContract contract) async {
+    return ElectionInfo(
+        name: await BlockchainService.instance.getElectionName(contract),
+        deadline: await BlockchainService.instance
+            .getUserDeadlineForElection(contract));
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          const SizedBox(
+            height: 56,
+          ),
+          Text(
+            "Create party for election",
+            style: Theme.of(context).textTheme.headline6?.copyWith(
+                  color: Colors.white70,
+                ),
+          ),
+          const SizedBox(
+            height: 24,
+          ),
+          Expanded(
+            child: FutureBuilder<List<DeployedContract>>(
+                future: BlockchainService.instance.getElectionsInProgress(),
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF7CFDF2),
+                      ),
+                    );
+                  }
+                  if (snap.hasError) {
+                    return const Center(
+                      child: Text('Something went wrong'),
+                    );
+                  }
+                  return ListView.builder(
+                      itemCount: snap.data!.length,
+                      itemBuilder: (BuildContext context, index) {
+                        return InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) =>
+                                    CreateParty(contract: snap.data![index])));
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 8.0, horizontal: 16.0),
+                            child: Container(
+                              child: FutureBuilder<ElectionInfo>(
+                                future: getElectionInfo(snap.data![index]),
+                                builder: (context, snap) {
+                                  if (snap.hasError) {
+                                    return const Center(
+                                      child: Text(
+                                        'Something went wrong. Please try again',
+                                        style: TextStyle(color: Colors.white70),
+                                      ),
+                                    );
+                                  }
+                                  if (snap.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFF7CFDF2),
+                                      ),
+                                    );
+                                  }
+                                  return Center(
+                                      child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        snap.data?.name ?? 'Election',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headline6
+                                            ?.copyWith(
+                                              color: Colors.white70,
+                                            ),
+                                      ),
+                                      const SizedBox(
+                                        height: 4,
+                                      ),
+                                      Text(
+                                        "Deadline: ${snap.data?.deadline.toString()}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2
+                                            ?.copyWith(
+                                              color: Colors.white54,
+                                            ),
+                                      ),
+                                    ],
+                                  ));
+                                },
+                              ),
+                              height: 90,
+                              decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  border: Border.all(color: const Color(0xFF7CFDF2)),
+                                  borderRadius:
+                                      const BorderRadius.all(Radius.circular(20))),
+                            ),
+                          ),
+                        );
+                      });
+                }),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CreateParty extends StatefulWidget {
+  final DeployedContract contract;
+  const CreateParty({Key? key, required this.contract}) : super(key: key);
+
+  @override
+  _CreatePartyState createState() => _CreatePartyState();
+}
+
+class _CreatePartyState extends State<CreateParty> {
+  String name = '';
+  bool loading = false;
   final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
@@ -62,7 +178,7 @@ class _CreateElectionState extends State<CreateElection> {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "Create Election",
+                                    "Create Party",
                                     style: Theme.of(context)
                                         .textTheme
                                         .headline5
@@ -94,80 +210,6 @@ class _CreateElectionState extends State<CreateElection> {
                                 ),
                               ),
                             ),
-                            const SizedBox(
-                              height: 15,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text("Registeration Period (in days)",
-                                    style: TextStyle(
-                                        color: Colors.white70, fontSize: 15)),
-                                SizedBox(
-                                  width: 90,
-                                  child: TextFormField(
-                                    validator: (value) {
-                                      if (!_isNumeric(value) ||
-                                          int.parse(value!) <= 0) {
-                                        return 'Invalid number';
-                                      }
-                                      return null;
-                                    },
-                                    onSaved: (val) {
-                                      numberOfDaysForRegisters =
-                                          int.parse(val ?? '0');
-                                    },
-                                    cursorColor: Colors.white70,
-                                    style: const TextStyle(color: Colors.white),
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: Colors.black12,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(
-                              height: 15,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text("Voting Period (in days)",
-                                    style: TextStyle(
-                                        color: Colors.white70, fontSize: 15)),
-                                SizedBox(
-                                  width: 90,
-                                  child: TextFormField(
-                                    validator: (value) {
-                                      if (!_isNumeric(value) ||
-                                          int.parse(value!) <= 0) {
-                                        return 'Invalid number';
-                                      }
-                                      return null;
-                                    },
-                                    onSaved: (val) {
-                                      numberOfDaysForUsers =
-                                          int.parse(val ?? '0');
-                                    },
-                                    cursorColor: Colors.white70,
-                                    style: const TextStyle(color: Colors.white),
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor: Colors.black12,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
                             Padding(
                               padding: const EdgeInsets.only(top: 30.0),
                               child: SizedBox(
@@ -187,10 +229,8 @@ class _CreateElectionState extends State<CreateElection> {
                                       });
                                       try {
                                         await BlockchainService.instance
-                                            .createElection(
-                                                numberOfDaysForRegisters,
-                                                numberOfDaysForUsers,
-                                                name);
+                                            .createParty(widget.contract, name);
+
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(const SnackBar(
                                                 content: Text(

@@ -1,4 +1,6 @@
+import 'package:aasha/add_election_party.dart';
 import 'package:aasha/cast_vote.dart';
+import 'package:aasha/create_election.dart';
 import 'package:flutter/material.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -17,6 +19,24 @@ class _ElectionsState extends State<Elections> {
         name: await BlockchainService.instance.getElectionName(contract),
         deadline: await BlockchainService.instance
             .getUserDeadlineForElection(contract));
+  }
+
+  List<DeployedContract> elections = [];
+  bool loading = false;
+  void loadElections() async {
+    setState(() {
+      loading = true;
+    });
+    elections = await BlockchainService.instance.getElectionsInProgress();
+    setState(() {
+      loading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    loadElections();
+    super.initState();
   }
 
   @override
@@ -38,16 +58,28 @@ class _ElectionsState extends State<Elections> {
                 style: TextStyle(color: Colors.white70),
               ),
             ),
-            const ListTile(
-              leading: Icon(Icons.create),
-              title: Text(
+            ListTile(
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const CreateElection()));
+              },
+              leading: const Icon(Icons.create),
+              title: const Text(
                 'Create an election',
                 style: TextStyle(color: Colors.white70),
               ),
             ),
-            const ListTile(
-              leading: Icon(Icons.add),
-              title: Text(
+            ListTile(
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const AddElectionParty()));
+              },
+              leading: const Icon(Icons.add),
+              title: const Text(
                 'Add a party',
                 style: TextStyle(color: Colors.white70),
               ),
@@ -82,6 +114,10 @@ class _ElectionsState extends State<Elections> {
         elevation: 0,
         centerTitle: true,
         title: const Text('AASHA'),
+        actions: [
+          IconButton(
+              onPressed: () => loadElections(), icon: const Icon(Icons.refresh))
+        ],
       ),
       body: Column(
         children: [
@@ -98,107 +134,93 @@ class _ElectionsState extends State<Elections> {
             height: 24,
           ),
           Expanded(
-            child: FutureBuilder<List<DeployedContract>>(
-              future: BlockchainService.instance.getElectionsInProgress(),
-              builder: (context, snap) {
-                if (snap.hasError) {
-                  return const Center(
-                    child: Text(
-                      'Something went wrong. Please try again',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  );
-                }
-                if (snap.hasData) {
-                  if (snap.data?.isEmpty ?? true) {
-                    return const Center(
-                      child: Text(
-                        'No upcoming elections found',
-                        style: TextStyle(color: Colors.white70),
+              child: loading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF7CFDF2),
                       ),
-                    );
-                  }
-                  return ListView.builder(
-                      itemCount: snap.data?.length,
-                      itemBuilder: (BuildContext context, index) {
-                        return InkWell(
-                          onTap: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) =>
-                                    Vote(contract: snap.data![index])));
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8.0, horizontal: 16.0),
-                            child: Container(
-                              child: FutureBuilder<ElectionInfo>(
-                                future: getElectionInfo(snap.data![index]),
-                                builder: (context, snap) {
-                                  if (snap.hasError) {
-                                    return const Center(
-                                      child: Text(
-                                        'Something went wrong. Please try again',
-                                        style: TextStyle(color: Colors.white70),
-                                      ),
-                                    );
-                                  }
-                                  if (snap.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const Center(
-                                      child: CircularProgressIndicator(
-                                        color: Color(0xFF7CFDF2),
-                                      ),
-                                    );
-                                  }
-                                  return Center(
-                                      child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        snap.data?.name ?? 'Election',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headline6
-                                            ?.copyWith(
-                                              color: Colors.white70,
-                                            ),
-                                      ),
-                                      const SizedBox(
-                                        height: 4,
-                                      ),
-                                      Text(
-                                        "Deadline: ${snap.data?.deadline.toString()}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .subtitle2
-                                            ?.copyWith(
-                                              color: Colors.white54,
-                                            ),
-                                      ),
-                                    ],
-                                  ));
-                                },
-                              ),
-                              height: 90,
-                              decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  border: Border.all(
-                                      color: const Color(0xFF7CFDF2)),
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(20))),
-                            ),
+                    )
+                  : elections.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No upcoming elections found',
+                            style: TextStyle(color: Colors.white70),
                           ),
-                        );
-                      });
-                }
-                return const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFF7CFDF2),
-                  ),
-                );
-              },
-            ),
-          )
+                        )
+                      : ListView.builder(
+                          itemCount: elections.length,
+                          itemBuilder: (BuildContext context, index) {
+                            return InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (context) =>
+                                        Vote(contract: elections[index])));
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8.0, horizontal: 16.0),
+                                child: Container(
+                                  child: FutureBuilder<ElectionInfo>(
+                                    future: getElectionInfo(elections[index]),
+                                    builder: (context, snap) {
+                                      if (snap.hasError) {
+                                        return const Center(
+                                          child: Text(
+                                            'Something went wrong. Please try again',
+                                            style: TextStyle(
+                                                color: Colors.white70),
+                                          ),
+                                        );
+                                      }
+                                      if (snap.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return const Center(
+                                          child: CircularProgressIndicator(
+                                            color: Color(0xFF7CFDF2),
+                                          ),
+                                        );
+                                      }
+                                      return Center(
+                                          child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            snap.data?.name ?? 'Election',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .headline6
+                                                ?.copyWith(
+                                                  color: Colors.white70,
+                                                ),
+                                          ),
+                                          const SizedBox(
+                                            height: 4,
+                                          ),
+                                          Text(
+                                            "Deadline: ${snap.data?.deadline.toString()}",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2
+                                                ?.copyWith(
+                                                  color: Colors.white54,
+                                                ),
+                                          ),
+                                        ],
+                                      ));
+                                    },
+                                  ),
+                                  height: 90,
+                                  decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      border: Border.all(
+                                          color: const Color(0xFF7CFDF2)),
+                                      borderRadius: const BorderRadius.all(
+                                          Radius.circular(20))),
+                                ),
+                              ),
+                            );
+                          }))
         ],
       ),
     );
