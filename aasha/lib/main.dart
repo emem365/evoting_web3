@@ -23,6 +23,7 @@ class AppWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(scaffoldBackgroundColor: const Color(0xFF292929), brightness: Brightness.dark, textTheme: GoogleFonts.montserratTextTheme(Theme.of(context).textTheme)),
       home: FutureBuilder<bool>(
         future: isUserRegisted(),

@@ -82,7 +82,7 @@ class BlockchainService {
     return results[0];
   }
 
-  Future<void> registerUser(UserModel model) async {
+  Future<String> registerUser(UserModel model) async {
     assert(registerContract != null);
     assert(_client != null);
     final res = await post(
@@ -117,6 +117,7 @@ class BlockchainService {
         chainId: null,
         fetchChainIdFromNetworkId: true);
     debugPrint(response);
+    return ipfs;
   }
 
   Future<List<DeployedContract>> getElectionsInProgress() async {

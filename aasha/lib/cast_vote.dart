@@ -253,7 +253,7 @@ class RegisterVote extends StatelessWidget {
             future: BlockchainService.instance.voteParty(contract, partyHash),
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF7CFDF2)));
               }
               if (snap.hasError) {
                 return Center(
@@ -305,10 +305,12 @@ class VoteRegistered extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Txn id: 0xahhfk7dsfnmdf892nfd0fdm',
-                      style: TextStyle(color: Colors.white70),
-                    ),
+                    Expanded(child: Text(
+                      'Txn id: $transactionId',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white70),
+                    ),),
                     IconButton(
                         onPressed: () {
                           Clipboard.setData(
