@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
-
+import 'package:aasha/register.dart';
 import 'package:aasha/secrets.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -24,7 +24,7 @@ class BlockchainService {
       'wss://ropsten.infura.io/ws/v3/b8e3788847454d999851078493cd7800';
 
   final createElectionContractAddress =
-      EthereumAddress.fromHex('0x690072BD0cC42baC936f342c34CCC3d9E17Ed423');
+      EthereumAddress.fromHex('0x07e90a385f633BdE571dC55ea262205974998239');
   final registerContractAddress =
       EthereumAddress.fromHex('0xc916249D121eE1e7630DAC2921c416F9Ca9F8768');
 
@@ -82,9 +82,26 @@ class BlockchainService {
     return results[0];
   }
 
-  Future<void> registerUser(String ipfsHash, String adhaar) async {
+  Future<void> registerUser(UserModel model) async {
     assert(registerContract != null);
     assert(_client != null);
+    final res = await post(
+        Uri.parse('http://ec2-15-207-97-255.ap-south-1.compute.amazonaws.com/'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'name': model.name,
+          'dob':
+              '${model.dateOfBirth.day}/${model.dateOfBirth.month}/${model.dateOfBirth.year}',
+          'aadhar': model.adhaar,
+          'pub_address': _myPublicAddress.hex
+        }));
+    debugPrint(res.statusCode.toString());
+    if (res.statusCode != 200) {
+      throw Exception(res.statusCode);
+    }
+    String ipfs = jsonDecode(res.body)['Hash'];
     final ethFunction = registerContract!.function('registerUser');
     final response = await _client!.sendTransaction(
         _myPrivateKey,
@@ -92,9 +109,9 @@ class BlockchainService {
           contract: registerContract!,
           function: ethFunction,
           parameters: [
-            convertHashToBytes(ipfsHash, _myPublicAddress),
+            convertHashToBytes(ipfs, _myPublicAddress),
             _myPublicAddress,
-            adhaar
+            model.adhaar
           ],
         ),
         chainId: null,
@@ -194,12 +211,37 @@ class BlockchainService {
 
   Future<List<dynamic>> getParties(DeployedContract contract) async {
     final response = await queryContract(contract, 'displayParty', []);
-    return response[0];   
+    return response[0];
   }
 
-  Future<String> getPartyName(DeployedContract contract, Uint8List party) async {
+  Future<String> getPartyName(
+      DeployedContract contract, Uint8List party) async {
     final response = await queryContract(contract, 'partyName', [party]);
     debugPrint(response.toString());
+    return response[0];
+  }
+
+  Future<String> voteParty(DeployedContract contract, dynamic partyHash) async {
+    assert(_client != null);
+    
+    final response =
+        await queryRegisterContract('IPFShash', [_myPublicAddress]);
+    final ethFunction = contract.function('vote');
+    final responseNew = await _client!.sendTransaction(
+        _myPrivateKey,
+        Transaction.callContract(
+          contract: contract,
+          function: ethFunction,
+          parameters: [response[0], partyHash],
+        ),
+        chainId: null,
+        fetchChainIdFromNetworkId: true);
+    return responseNew;
+  }
+
+  Future<bool> getHasVotedOnContract(DeployedContract contract) async {
+    final response =
+        await queryContract(contract, 'hasVoted', [_myPublicAddress]);
     return response[0];
   }
 }

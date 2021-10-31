@@ -10,7 +10,9 @@ class AddElectionParty extends StatelessWidget {
     return ElectionInfo(
         name: await BlockchainService.instance.getElectionName(contract),
         deadline: await BlockchainService.instance
-            .getUserDeadlineForElection(contract));
+            .getUserDeadlineForElection(contract),
+        hasVoted:
+            await BlockchainService.instance.getHasVotedOnContract(contract));
   }
 
   @override
@@ -110,9 +112,10 @@ class AddElectionParty extends StatelessWidget {
                               height: 90,
                               decoration: BoxDecoration(
                                   color: Colors.black54,
-                                  border: Border.all(color: const Color(0xFF7CFDF2)),
-                                  borderRadius:
-                                      const BorderRadius.all(Radius.circular(20))),
+                                  border: Border.all(
+                                      color: const Color(0xFF7CFDF2)),
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(20))),
                             ),
                           ),
                         );

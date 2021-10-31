@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
-
+import 'package:aasha/elections.dart';
+import 'package:http/http.dart' as http;
 import 'package:aasha/blockchain_service.dart';
 import 'package:aasha/register.dart';
 import 'package:flutter/material.dart';
@@ -94,11 +95,15 @@ class _OtpPageState extends State<OtpPage> {
                                 setState(() {
                                   loading = true;
                                 });
-                                //TODO: Get IPFS HASH
+
                                 try {
-                                  await BlockchainService.instance.registerUser(
-                                      "QmXwF1otuvKu5LtumFhHGrPkJUDvbV3x82JFCahkHF9sCT", widget.model.adhaar);
-                                      debugPrint('PROCESSED');
+                                  await BlockchainService.instance
+                                      .registerUser(widget.model);
+                                  Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const Elections()));
                                 } catch (e) {
                                   setState(() {
                                     loading = true;

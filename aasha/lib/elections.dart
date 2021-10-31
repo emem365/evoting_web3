@@ -1,10 +1,10 @@
-import 'package:aasha/add_election_party.dart';
-import 'package:aasha/cast_vote.dart';
-import 'package:aasha/create_election.dart';
 import 'package:flutter/material.dart';
 import 'package:web3dart/web3dart.dart';
 
+import 'package:aasha/add_election_party.dart';
 import 'package:aasha/blockchain_service.dart';
+import 'package:aasha/cast_vote.dart';
+import 'package:aasha/create_election.dart';
 
 class Elections extends StatefulWidget {
   const Elections({Key? key}) : super(key: key);
@@ -18,7 +18,9 @@ class _ElectionsState extends State<Elections> {
     return ElectionInfo(
         name: await BlockchainService.instance.getElectionName(contract),
         deadline: await BlockchainService.instance
-            .getUserDeadlineForElection(contract));
+            .getUserDeadlineForElection(contract),
+        hasVoted:
+            await BlockchainService.instance.getHasVotedOnContract(contract));
   }
 
   List<DeployedContract> elections = [];
@@ -198,7 +200,9 @@ class _ElectionsState extends State<Elections> {
                                             height: 4,
                                           ),
                                           Text(
-                                            "Deadline: ${snap.data?.deadline.toString()}",
+                                            snap.data?.hasVoted ?? false
+                                                ? "You've already voted"
+                                                : "Deadline: ${snap.data?.deadline.toString()}",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2
@@ -230,18 +234,22 @@ class _ElectionsState extends State<Elections> {
 class ElectionInfo {
   String name;
   DateTime deadline;
+  bool hasVoted;
   ElectionInfo({
     required this.name,
     required this.deadline,
+    required this.hasVoted,
   });
 
   ElectionInfo copyWith({
     String? name,
     DateTime? deadline,
+    bool? hasVoted,
   }) {
     return ElectionInfo(
       name: name ?? this.name,
       deadline: deadline ?? this.deadline,
+      hasVoted: hasVoted ?? this.hasVoted,
     );
   }
 }

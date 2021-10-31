@@ -143,7 +143,7 @@ class _VoteState extends State<Vote> {
                 width: MediaQuery.of(context).size.width / 2,
                 child: ElevatedButton(
                     onPressed: () async {
-                      if(selected == -1){
+                      if (selected == -1) {
                         return;
                       }
                       Dialog confirmation = Dialog(
@@ -156,7 +156,7 @@ class _VoteState extends State<Vote> {
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                               Padding(
+                              Padding(
                                 padding: const EdgeInsets.all(15.0),
                                 child: Text(
                                   'Are you sure you want to vote for ${partyNames[partiesHashes[selected]]} party?',
@@ -203,9 +203,11 @@ class _VoteState extends State<Vote> {
                           context: context,
                           builder: (BuildContext context) => confirmation);
                       if (response) {
-                        //TODO: Cast vote to selected
                         Navigator.of(context).pushReplacement(MaterialPageRoute(
-                            builder: (context) => const VoteRegistered()));
+                            builder: (context) => RegisterVote(
+                                  contract: widget.contract,
+                                  partyHash: partiesHashes[selected],
+                                )));
                       }
                     },
                     child: const Text(
@@ -232,8 +234,12 @@ class _VoteState extends State<Vote> {
   }
 }
 
-class VoteRegistered extends StatelessWidget {
-  const VoteRegistered({Key? key}) : super(key: key);
+class RegisterVote extends StatelessWidget {
+  final DeployedContract contract;
+  final dynamic partyHash;
+  const RegisterVote(
+      {Key? key, required this.contract, required this.partyHash})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -243,58 +249,81 @@ class VoteRegistered extends StatelessWidget {
           elevation: 0,
           leading: const BackButton(),
         ),
-        body: TopCenterConfetti(
-          child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: Column(
+        body: FutureBuilder<String>(
+            future: BlockchainService.instance.voteParty(contract, partyHash),
+            builder: (context, snap) {
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snap.hasError) {
+                return Center(
+                    child: Text('Unable to vote. Try again.\n${snap.error}'));
+              }
+              return VoteRegistered(
+                transactionId: snap.data!,
+              );
+            }));
+  }
+}
+
+class VoteRegistered extends StatelessWidget {
+  final String transactionId;
+  const VoteRegistered({Key? key, required this.transactionId})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return TopCenterConfetti(
+      child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Congratulations!',
+                  style: Theme.of(context).textTheme.headline4?.copyWith(
+                      color: const Color(0xFFB998FF),
+                      fontWeight: FontWeight.bold),
+                ),
+                Image.asset('assets/fist-bump.png'),
+                Text(
+                  'You\'ve successfully cast your vote!',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headline6
+                      ?.copyWith(color: Colors.white70),
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                const Text(
+                  'This transaction ID is proof of your vote:',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      'Congratulations!',
-                      style: Theme.of(context).textTheme.headline4?.copyWith(
-                          color: const Color(0xFFB998FF),
-                          fontWeight: FontWeight.bold),
-                    ),
-                    Image.asset('assets/fist-bump.png'),
-                    Text(
-                      'You\'ve successfully cast your vote!',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headline6
-                          ?.copyWith(color: Colors.white70),
-                    ),
-                    const SizedBox(
-                      height: 8,
-                    ),
                     const Text(
-                      'This transaction ID is proof of your vote:',
+                      'Txn id: 0xahhfk7dsfnmdf892nfd0fdm',
                       style: TextStyle(color: Colors.white70),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Txn id: 0xahhfk7dsfnmdf892nfd0fdm',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                        IconButton(
-                            onPressed: () {
-                              Clipboard.setData(
-                                      const ClipboardData(text: 'Some Text'))
-                                  .then((value) => ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(
-                                          content:
-                                              Text('Copied to clipboard'))));
-                            },
-                            icon: const Icon(Icons.copy))
-                      ],
-                    )
+                    IconButton(
+                        onPressed: () {
+                          Clipboard.setData(
+                                  const ClipboardData(text: 'Some Text'))
+                              .then((value) => ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                      content: Text('Copied to clipboard'))));
+                        },
+                        icon: const Icon(Icons.copy))
                   ],
-                ),
-              )),
-        ));
+                )
+              ],
+            ),
+          )),
+    );
   }
 }
 
