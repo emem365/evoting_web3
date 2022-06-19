@@ -5,8 +5,8 @@ The main app Aasha is a Flutter app written in Dart.
 The smart contracts are written in Solidity and ready to deploy to Ethereum Blockchain.
 The backend is written in Python - Flask.
 
-<img src="https://github.com/emem365/evoting_web3/raw/main/assets/1635668119535.jpg" width=200px />  <img src="https://github.com/emem365/evoting_web3/raw/main/assets/1635661679536.jpg" width=200px />  <img src="https://github.com/emem365/evoting_web3/raw/main/assets/1635668119528.jpg" width=200px />
-<img src="https://github.com/emem365/evoting_web3/raw/main/assets/1635668119523.jpg" width=200px />  <img src="https://github.com/emem365/evoting_web3/raw/main/assets/1635661679515.jpg" width=200px />
+<img src="https://github.com/emem365/evoting_web3/raw/main/assets/1635668119535.jpg" width=250px />  <img src="https://github.com/emem365/evoting_web3/raw/main/assets/1635661679536.jpg" width=250px />  <img src="https://github.com/emem365/evoting_web3/raw/main/assets/1635668119528.jpg" width=250px />
+<img src="https://github.com/emem365/evoting_web3/raw/main/assets/1635668119523.jpg" width=250px />  <img src="https://github.com/emem365/evoting_web3/raw/main/assets/1635661679515.jpg" width=250px />
 
 ## The Problems Aasha solves
 The traditional way of voting asks the voters to go to a specific voting booth to cast their votes. This way of voting raises several issues -
